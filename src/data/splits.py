@@ -49,4 +49,21 @@ def build_splits(df: pd.DataFrame, group_column: str = "group_strict", val_fract
     looks like. Together they cover every row exactly once, and no value of
     `group_column` is on both sides.
     """
-    raise NotImplementedError("TASK 1: the grouped split")
+    units = np.sort(df[group_column].unique())
+    np.random.default_rng(seed).shuffle(units)
+
+    validation_units: list = []
+    validation_rows = 0
+    target_rows = val_fraction * len(df)
+    row_counts = df[group_column].value_counts()
+
+    for unit in units:
+      validation_units.append(unit)
+      validation_rows += row_counts[unit]
+      if validation_rows >= target_rows:
+        break
+
+    validation_mask = df[group_column].isin(validation_units).to_numpy()
+    val_idx = np.flatnonzero(validation_mask)
+    train_idx = np.flatnonzero(~validation_mask)
+    return train_idx, val_idx
